@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <link rel="stylesheet" href="css/filter.css">
+<link rel="stylesheet" href="css/nouislider.min.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-search.js"></script>
+        <script src="js/tailDT.js"></script>
+<script src="js/nouislider.min.js"></script>
+<script src="js/wNumb.js"></script>
+        <script src="data/MPSSchoolLocations_2.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: '#ffff00',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: '#ffff00',
+                fillOpacity: 1
+              });
+            }
+            highlightLayer.openPopup();
+        }
+        var map = L.map('map', {
+            zoomControl:true, maxZoom:28, minZoom:1
+        }).fitBounds([[42.92576683055389,-88.13267107825267],[43.18164412390191,-87.79912750057078]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        document.querySelector(".leaflet-popup-pane").addEventListener("load", function(event) {
+          var tagName = event.target.tagName,
+            popup = map._popup;
+          // Also check if flag is already set.
+          if (tagName === "IMG" && popup && !popup._updated) {
+            popup._updated = true; // Set flag to prevent looping.
+            popup.update();
+          }
+        }, true);
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_MapboxSatellite_0');
+        map.getPane('pane_MapboxSatellite_0').style.zIndex = 400;
+        var layer_MapboxSatellite_0 = L.tileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.webp?sku=101S0AiAdllT3&access_token=pk.eyJ1Ijoiam9uY2hlbWxhIiwiYSI6IjdXUzRocmsifQ.acEmRifqE4Bh2Xz-IY_4Bw', {
+            pane: 'pane_MapboxSatellite_0',
+            opacity: 1.0,
+            attribution: '<a href="https://www.maxar.com/">Maxar</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        layer_MapboxSatellite_0;
+        map.addLayer(layer_MapboxSatellite_0);
+        map.createPane('pane_BaseMap_1');
+        map.getPane('pane_BaseMap_1').style.zIndex = 401;
+        var layer_BaseMap_1 = L.tileLayer('https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            pane: 'pane_BaseMap_1',
+            opacity: 1.0,
+            attribution: '<a href="https://cartodb.com/basemaps/">Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        layer_BaseMap_1;
+        map.addLayer(layer_BaseMap_1);
+        function pop_MPSSchoolLocations_2(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">School Name</th>\
+                        <td>' + (feature.properties['School Name'] !== null ? autolinker.link(feature.properties['School Name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Grouped School Levels</th>\
+                        <td>' + (feature.properties['Grouped School Levels'] !== null ? autolinker.link(feature.properties['Grouped School Levels'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">FCI Group</th>\
+                        <td>' + (feature.properties['FCI Group'] !== null ? autolinker.link(feature.properties['FCI Group'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Utilization Group</th>\
+                        <td>' + (feature.properties['Utilization Group'] !== null ? autolinker.link(feature.properties['Utilization Group'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
+        }
+
+        function style_MPSSchoolLocations_2_0(feature) {
+            switch(String(feature.properties['Grouped School Levels'])) {
+                case 'Elementary School':
+                    return {
+                pane: 'pane_MPSSchoolLocations_2',
+                radius: 6.4,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(155,239,90,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'High School':
+                    return {
+                pane: 'pane_MPSSchoolLocations_2',
+                radius: 6.4,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(174,125,211,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'K-8':
+                    return {
+                pane: 'pane_MPSSchoolLocations_2',
+                radius: 6.4,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(91,215,223,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Middle School':
+                    return {
+                pane: 'pane_MPSSchoolLocations_2',
+                radius: 6.4,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,133,127,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_MPSSchoolLocations_2');
+        map.getPane('pane_MPSSchoolLocations_2').style.zIndex = 402;
+        map.getPane('pane_MPSSchoolLocations_2').style['mix-blend-mode'] = 'normal';
+        var layer_MPSSchoolLocations_2 = new L.geoJson(json_MPSSchoolLocations_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_MPSSchoolLocations_2',
+            layerName: 'layer_MPSSchoolLocations_2',
+            pane: 'pane_MPSSchoolLocations_2',
+            onEachFeature: pop_MPSSchoolLocations_2,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_MPSSchoolLocations_2_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_MPSSchoolLocations_2);
+        map.addLayer(layer_MPSSchoolLocations_2);
+        var baseMaps = {};
+        var overlaysTree = [
+            {label: 'MPS School Locations<br /><table><tr><td style="text-align: center;"><img src="legend/MPSSchoolLocations_2_ElementarySchool0.png" /></td><td>Elementary School</td></tr><tr><td style="text-align: center;"><img src="legend/MPSSchoolLocations_2_HighSchool1.png" /></td><td>High School</td></tr><tr><td style="text-align: center;"><img src="legend/MPSSchoolLocations_2_K82.png" /></td><td>K-8</td></tr><tr><td style="text-align: center;"><img src="legend/MPSSchoolLocations_2_MiddleSchool3.png" /></td><td>Middle School</td></tr></table>', layer: layer_MPSSchoolLocations_2},
+            {label: "Base Map", layer: layer_BaseMap_1},
+            {label: "Mapbox Satellite", layer: layer_MapboxSatellite_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: false, 
+        });
+        lay.addTo(map);
+        setBounds();
+        map.addControl(new L.Control.Search({
+            layer: layer_MPSSchoolLocations_2,
+            initial: false,
+            hideMarkerOnCollapse: true,
+            propertyName: 'School Name'}));
+        document.getElementsByClassName('search-button')[0].className +=
+         ' fa fa-binoculars';
+        var mapDiv = document.getElementById('map');
+        var row = document.createElement('div');
+        row.className="row";
+        row.id="all";
+        row.style.height = "100%";
+        var col1 = document.createElement('div');
+        col1.className="col9";
+        col1.id = "mapWindow";
+        col1.style.height = "99%";
+        col1.style.width = "80%";
+        col1.style.display = "inline-block";
+        var col2 = document.createElement('div');
+        col2.className="col3";
+        col2.id = "menu";
+        col2.style.display = "inline-block";
+        mapDiv.parentNode.insertBefore(row, mapDiv);
+        document.getElementById("all").appendChild(col1);
+        document.getElementById("all").appendChild(col2);
+        col1.appendChild(mapDiv)
+        var Filters = {"Grouped School Levels": "str","SchoolType": "str","Utilization Group": "str","FCI Group": "str"};
+        function filterFunc() {
+          map.eachLayer(function(lyr){
+          if ("options" in lyr && "dataVar" in lyr["options"]){
+            features = this[lyr["options"]["dataVar"]].features.slice(0);
+            try{
+              for (key in Filters){
+                keyS = key.replace(/[^a-zA-Z0-9_]/g, "")
+                if (Filters[key] == "str" || Filters[key] == "bool"){
+                  var selection = [];
+                  var options = document.getElementById("sel_" + keyS).options
+                  for (var i=0; i < options.length; i++) {
+                    if (options[i].selected) selection.push(options[i].value);
+                  }
+                    try{
+                      if (key in features[0].properties){
+                        for (i = features.length - 1;
+                          i >= 0; --i){
+                          if (selection.indexOf(
+                          features[i].properties[key])<0
+                          && selection.length>0) {
+                          features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                  }
+                }
+                if (Filters[key] == "int"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (parseInt(features[i].properties[key])
+                          < sliderVals[0]
+                          || parseInt(features[i].properties[key])
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "real"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (features[i].properties[key]
+                          < sliderVals[0]
+                          || features[i].properties[key]
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "date"
+                  || Filters[key] == "datetime"
+                  || Filters[key] == "time"){
+                  try{
+                    if (key in features[0].properties){
+                      HTMLkey = key.replace(/[&\/\\#,+()$~%.'":*?<>{} ]/g, '');
+                      startdate = document.getElementById("dat_" +
+                        HTMLkey + "_date1").value.replace(" ", "T");
+                      enddate = document.getElementById("dat_" +
+                        HTMLkey + "_date2").value.replace(" ", "T");
+                      for (i = features.length - 1; i >= 0; --i){
+                        if (features[i].properties[key] < startdate
+                          || features[i].properties[key] > enddate){
+                          features.splice(i,1);
+                        }
+                      }
+                    }
+                  } catch(err){
+                  }
+                }
+              }
+            } catch(err){
+            }
+          this[lyr["options"]["layerName"]].clearLayers();
+          this[lyr["options"]["layerName"]].addData(features);
+          }
+          })
+        }
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_GroupedSchoolLevels = document.createElement('div');
+            div_GroupedSchoolLevels.id = "div_GroupedSchoolLevels";
+            div_GroupedSchoolLevels.className= "filterselect";
+            document.getElementById("menu").appendChild(div_GroupedSchoolLevels);
+            sel_GroupedSchoolLevels = document.createElement('select');
+            sel_GroupedSchoolLevels.multiple = true;
+            sel_GroupedSchoolLevels.size = 4;
+            sel_GroupedSchoolLevels.id = "sel_GroupedSchoolLevels";
+            var GroupedSchoolLevels_options_str = "<option value='' unselected></option>";
+            sel_GroupedSchoolLevels.onchange = function(){filterFunc()};
+            GroupedSchoolLevels_options_str  += '<option value="Elementary School">Elementary School</option>';
+            GroupedSchoolLevels_options_str  += '<option value="High School">High School</option>';
+            GroupedSchoolLevels_options_str  += '<option value="K-8">K-8</option>';
+            GroupedSchoolLevels_options_str  += '<option value="Middle School">Middle School</option>';
+            sel_GroupedSchoolLevels.innerHTML = GroupedSchoolLevels_options_str;
+            div_GroupedSchoolLevels.appendChild(sel_GroupedSchoolLevels);
+            var lab_GroupedSchoolLevels = document.createElement('div');
+            lab_GroupedSchoolLevels.innerHTML = 'Grouped School Levels';
+            lab_GroupedSchoolLevels.className = 'filterlabel';
+            div_GroupedSchoolLevels.appendChild(lab_GroupedSchoolLevels);
+            var reset_GroupedSchoolLevels = document.createElement('div');
+            reset_GroupedSchoolLevels.innerHTML = 'clear filter';
+            reset_GroupedSchoolLevels.className = 'filterlabel';
+            reset_GroupedSchoolLevels.onclick = function() {
+                var options = document.getElementById("sel_GroupedSchoolLevels").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_GroupedSchoolLevels.appendChild(reset_GroupedSchoolLevels);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_SchoolType = document.createElement('div');
+            div_SchoolType.id = "div_SchoolType";
+            div_SchoolType.className= "filterselect";
+            document.getElementById("menu").appendChild(div_SchoolType);
+            sel_SchoolType = document.createElement('select');
+            sel_SchoolType.multiple = true;
+            sel_SchoolType.size = 4;
+            sel_SchoolType.id = "sel_SchoolType";
+            var SchoolType_options_str = "<option value='' unselected></option>";
+            sel_SchoolType.onchange = function(){filterFunc()};
+            SchoolType_options_str  += '<option value="Instrumentality">Instrumentality</option>';
+            SchoolType_options_str  += '<option value="Non-Instrumentality">Non-Instrumentality</option>';
+            SchoolType_options_str  += '<option value="Partnership">Partnership</option>';
+            SchoolType_options_str  += '<option value="Traditional">Traditional</option>';
+            sel_SchoolType.innerHTML = SchoolType_options_str;
+            div_SchoolType.appendChild(sel_SchoolType);
+            var lab_SchoolType = document.createElement('div');
+            lab_SchoolType.innerHTML = 'SchoolType';
+            lab_SchoolType.className = 'filterlabel';
+            div_SchoolType.appendChild(lab_SchoolType);
+            var reset_SchoolType = document.createElement('div');
+            reset_SchoolType.innerHTML = 'clear filter';
+            reset_SchoolType.className = 'filterlabel';
+            reset_SchoolType.onclick = function() {
+                var options = document.getElementById("sel_SchoolType").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_SchoolType.appendChild(reset_SchoolType);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_UtilizationGroup = document.createElement('div');
+            div_UtilizationGroup.id = "div_UtilizationGroup";
+            div_UtilizationGroup.className= "filterselect";
+            document.getElementById("menu").appendChild(div_UtilizationGroup);
+            sel_UtilizationGroup = document.createElement('select');
+            sel_UtilizationGroup.multiple = true;
+            sel_UtilizationGroup.size = 4;
+            sel_UtilizationGroup.id = "sel_UtilizationGroup";
+            var UtilizationGroup_options_str = "<option value='' unselected></option>";
+            sel_UtilizationGroup.onchange = function(){filterFunc()};
+            UtilizationGroup_options_str  += '<option value="Good">Good</option>';
+            UtilizationGroup_options_str  += '<option value="High">High</option>';
+            UtilizationGroup_options_str  += '<option value="Low">Low</option>';
+            UtilizationGroup_options_str  += '<option value="Very Low">Very Low</option>';
+            sel_UtilizationGroup.innerHTML = UtilizationGroup_options_str;
+            div_UtilizationGroup.appendChild(sel_UtilizationGroup);
+            var lab_UtilizationGroup = document.createElement('div');
+            lab_UtilizationGroup.innerHTML = 'Utilization Group';
+            lab_UtilizationGroup.className = 'filterlabel';
+            div_UtilizationGroup.appendChild(lab_UtilizationGroup);
+            var reset_UtilizationGroup = document.createElement('div');
+            reset_UtilizationGroup.innerHTML = 'clear filter';
+            reset_UtilizationGroup.className = 'filterlabel';
+            reset_UtilizationGroup.onclick = function() {
+                var options = document.getElementById("sel_UtilizationGroup").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_UtilizationGroup.appendChild(reset_UtilizationGroup);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_FCIGroup = document.createElement('div');
+            div_FCIGroup.id = "div_FCIGroup";
+            div_FCIGroup.className= "filterselect";
+            document.getElementById("menu").appendChild(div_FCIGroup);
+            sel_FCIGroup = document.createElement('select');
+            sel_FCIGroup.multiple = true;
+            sel_FCIGroup.size = 5;
+            sel_FCIGroup.id = "sel_FCIGroup";
+            var FCIGroup_options_str = "<option value='' unselected></option>";
+            sel_FCIGroup.onchange = function(){filterFunc()};
+            FCIGroup_options_str  += '<option value="Compromised">Compromised</option>';
+            FCIGroup_options_str  += '<option value="Moderate">Moderate</option>';
+            FCIGroup_options_str  += '<option value="No Data">No Data</option>';
+            FCIGroup_options_str  += '<option value="Optimal">Optimal</option>';
+            FCIGroup_options_str  += '<option value="Severely Compromised">Severely Compromised</option>';
+            sel_FCIGroup.innerHTML = FCIGroup_options_str;
+            div_FCIGroup.appendChild(sel_FCIGroup);
+            var lab_FCIGroup = document.createElement('div');
+            lab_FCIGroup.innerHTML = 'FCI Group';
+            lab_FCIGroup.className = 'filterlabel';
+            div_FCIGroup.appendChild(lab_FCIGroup);
+            var reset_FCIGroup = document.createElement('div');
+            reset_FCIGroup.innerHTML = 'clear filter';
+            reset_FCIGroup.className = 'filterlabel';
+            reset_FCIGroup.onclick = function() {
+                var options = document.getElementById("sel_FCIGroup").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_FCIGroup.appendChild(reset_FCIGroup);
+        </script>
+    </body>
+</html>
